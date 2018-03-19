@@ -1,0 +1,200 @@
+﻿<UserControl x:Class="TicketReservation.SectionEditor"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:TicketReservation"
+             mc:Ignorable="d" 
+             MinWidth="450" MouseDown="ControlMouseDown">
+    <UserControl.Resources>
+        <local:SelectionStateEnumToEditingStateConverter x:Key="StateConverter" />
+        <local:SelectionStateEnumToEditingButtonStateConverter x:Key="StateButtonConverter" />
+        <local:SelectedKindIndexToBoolConverter x:Key="KindIndexConverter" />
+        <local:SoldBoolToStringConverter x:Key="SoldStringConverter" />
+        <local:SeatNoIntToStringConverter x:Key="SeatStringConverter" />
+        <local:TicketKindEnumToStringConverter x:Key="KindStringConverter" />
+        <BooleanToVisibilityConverter x:Key="BoolToVisConverter" />
+        <local:InvertedBooleanToVisibilityConverter x:Key="InvBoolToVisConverter" />
+        <local:TextBoxLengthToHelpTextBlockVisibilityConverter x:Key="HelperVisibilityConverter" />
+    </UserControl.Resources>
+    <TabControl>
+        <TabItem Header="Tabulka rezervací">
+            <Grid Name="MainGrid">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <ListView Margin="5" ItemsSource="{Binding Path=Reservations}" Name="MainListView" KeyboardNavigation.TabNavigation="Continue" SelectionChanged="ReservationSelected">
+                    <ListView.Resources>
+                        <Style TargetType="GridViewColumnHeader">
+                            <Setter Property="HorizontalContentAlignment" Value="Left" />
+                            <Setter Property="ContentTemplate">
+                                <Setter.Value>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding}" Padding="4,0" />
+                                    </DataTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+
+                        <ContextMenu x:Key="ItemContextMenu">
+                            <MenuItem Header="Smazat" Click="DeleteReservationCtMenu" />
+                        </ContextMenu>
+                    </ListView.Resources>
+                    <ListView.ItemContainerStyle>
+                        <Style TargetType="{x:Type ListViewItem}">
+                            <Setter Property="ContextMenu" Value="{StaticResource ItemContextMenu}"/>
+                        </Style>
+                    </ListView.ItemContainerStyle>
+
+                    <ListView.View>
+                        <GridView AllowsColumnReorder="True">
+                            <GridViewColumn Header="Jméno" DisplayMemberBinding="{Binding Name}" />
+                            <GridViewColumn Header="Druh" DisplayMemberBinding="{Binding Kind, Converter={StaticResource KindStringConverter}}" />
+                            <GridViewColumn Header="Místo č." DisplayMemberBinding="{Binding SeatNo, Converter={StaticResource SeatStringConverter}}" />
+                            <GridViewColumn Header="Kód vstupenky" DisplayMemberBinding="{Binding TicketCode}" />
+                            <GridViewColumn Header="Zaplaceno" DisplayMemberBinding="{Binding Sold, Converter={StaticResource SoldStringConverter}}" />
+                            <GridViewColumn Header="Zadal" DisplayMemberBinding="{Binding User}" />
+                            <GridViewColumn Header="Zadáno dne" DisplayMemberBinding="{Binding BookedOn, StringFormat='{}{0:d\. M\. yyyy}'}" />
+                            <GridViewColumn Header="Kontakt" DisplayMemberBinding="{Binding Contact}" />
+                        </GridView>
+                    </ListView.View>
+                </ListView>
+
+                <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" MouseUp="RightPanelMouseUp">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <Expander Grid.Row="0" Name="ValueEditor" BorderThickness="1" BorderBrush="#858585" Margin="5" Padding="8,3" VerticalAlignment="Top" IsExpanded="True"
+                                  MouseDown="RightPanelExpanderMouseHandle" MouseUp="RightPanelExpanderMouseHandle">
+                            <Expander.Header>
+                                <StackPanel>
+                                    <TextBlock Text="Podrobnosti" Visibility="{Binding Path=IsExpanded, RelativeSource={RelativeSource AncestorType=Expander, Mode=FindAncestor}, Converter={StaticResource InvBoolToVisConverter}}" />
+                                    <TextBlock Grid.Row="0" Grid.ColumnSpan="2" FontSize="13" Name="StateTextBlock" HorizontalAlignment="Stretch"
+                                        Visibility="{Binding Path=IsExpanded, RelativeSource={RelativeSource AncestorType=Expander, Mode=FindAncestor}, Converter={StaticResource BoolToVisConverter}}"
+                                        Text="{Binding Path=CurrentSelectionState, Converter={StaticResource ResourceKey='StateConverter'}, StringFormat='Režim: {0}'}" />
+                                </StackPanel>
+                            </Expander.Header>
+
+                            <Grid Width="250" Margin="-8">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.Resources>
+                                    <Style TargetType="FrameworkElement" x:Key="MarginStyle">
+                                        <Style.Triggers>
+                                            <Trigger Property="Grid.Column" Value="0">
+                                                <Setter Property="Margin" Value="10,5,5,5" />
+                                                <Setter Property="HorizontalAlignment" Value="Right" />
+                                            </Trigger>
+
+                                            <Trigger Property="Grid.Column" Value="1">
+                                                <Setter Property="Margin" Value="0,5,10,5" />
+                                                <Setter Property="HorizontalAlignment" Value="Stretch" />
+                                            </Trigger>
+                                        </Style.Triggers>
+                                        <Setter Property="VerticalAlignment" Value="Center" />
+                                    </Style>
+
+                                    <Style BasedOn="{StaticResource MarginStyle}" TargetType="TextBox">
+                                        <Setter Property="Padding" Value="2" />
+                                    </Style>
+
+                                    <Style BasedOn="{StaticResource MarginStyle}" TargetType="Button">
+                                        <Setter Property="Padding" Value="7,2" />
+                                    </Style>
+
+                                    <Style BasedOn="{StaticResource MarginStyle}" TargetType="WrapPanel">
+                                        <Style.Triggers>
+                                            <Trigger Property="Grid.Column" Value="0">
+                                                <Setter Property="HorizontalAlignment" Value="Center" />
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+
+                                    <Style BasedOn="{StaticResource MarginStyle}" TargetType="TextBlock" />
+                                    <Style BasedOn="{StaticResource MarginStyle}" TargetType="Label" />
+                                    <Style BasedOn="{StaticResource MarginStyle}" TargetType="CheckBox" />
+                                    <Style BasedOn="{StaticResource MarginStyle}" TargetType="ComboBox" />
+                                </Grid.Resources>
+
+                                <TextBlock Grid.Row="0" Text="Jméno:" />
+                                <TextBox Grid.Row="0" Grid.Column="1" Name="EditorNameTextBox" TextChanged="ReservationTextPropertyUpdated" />
+                                <TextBlock Grid.Row="0" Grid.Column="1" Padding="5,0" Text="Jméno rezervujícího" Foreground="#FF949494" FontStyle="Italic"
+                                           IsHitTestVisible="False" HorizontalAlignment="Left" Visibility="{Binding Path=Text.Length, ElementName=EditorNameTextBox, Converter={StaticResource HelperVisibilityConverter}}" />
+
+                                <TextBlock Grid.Row="1" Text="Kontakt:" />
+                                <TextBox Grid.Row="1" Grid.Column="1" Name="EditorContactTextBox" TextChanged="ReservationTextPropertyUpdated" />
+                                <TextBlock Grid.Row="1" Grid.Column="1" Padding="5,0" Text="Kontakt na rezervujícího" Foreground="#FF949494" FontStyle="Italic"
+                                           IsHitTestVisible="False" HorizontalAlignment="Left" Visibility="{Binding Path=Text.Length, ElementName=EditorContactTextBox, Converter={StaticResource HelperVisibilityConverter}}" />
+
+                                <TextBlock Grid.Row="2" Text="Druh:" />
+                                <ComboBox Grid.Row="2" Grid.Column="1" Name="EditorKindComboBox" SelectionChanged="ReservationKindUpdated">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding Converter={StaticResource KindStringConverter}}" />
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+
+                                <TextBlock Grid.Row="3" Text="Číslo stolu:" />
+                                <TextBox Grid.Row="3" Grid.Column="1" IsEnabled="{Binding ElementName=EditorKindComboBox, Path=SelectedIndex, Converter={StaticResource KindIndexConverter}}" Name="EditorSeatNoTextBox" TextChanged="ReservationTextPropertyUpdated" />
+                                <TextBlock Grid.Row="3" Grid.Column="1" Padding="5,0" Text="Číslo místa k sezení" Foreground="#FF949494" FontStyle="Italic"
+                                           IsHitTestVisible="False" HorizontalAlignment="Left" Visibility="{Binding Path=Text.Length, ElementName=EditorSeatNoTextBox, Converter={StaticResource HelperVisibilityConverter}}" />
+
+                                <TextBlock Grid.Row="4" Text="Kód vstupenky:" />
+                                <TextBox Grid.Row="4" Grid.Column="1" Name="EditorTicketCodeTextBox" TextChanged="ReservationTextPropertyUpdated" />
+                                <TextBlock Grid.Row="4" Grid.Column="1" Padding="5,0" Text="Unikátní textové označení" Foreground="#FF949494" FontStyle="Italic"
+                                           IsHitTestVisible="False" HorizontalAlignment="Left" Visibility="{Binding Path=Text.Length, ElementName=EditorTicketCodeTextBox, Converter={StaticResource HelperVisibilityConverter}}" />
+
+                                <TextBlock Grid.Row="5" Text="Zaplaceno:" />
+                                <CheckBox Grid.Row="5" Grid.Column="1" Name="EditorSoldCheckBox" Click="ReservationSoldUpdated" />
+
+                                <TextBlock Grid.Row="6" Text="Vložil:" />
+                                <TextBox Grid.Row="6" Grid.Column="1" Name="EditorUserTextBox" TextChanged="ReservationTextPropertyUpdated" />
+                                <TextBlock Grid.Row="6" Grid.Column="1" Padding="5,0" Text="Operátor aplikace" Foreground="#FF949494" FontStyle="Italic"
+                                           IsHitTestVisible="False" HorizontalAlignment="Left" Visibility="{Binding Path=Text.Length, ElementName=EditorUserTextBox, Converter={StaticResource HelperVisibilityConverter}}" />
+
+                                <TextBlock Grid.Row="7" Text="Zapsáno dne:" />
+                                <TextBox Grid.Row="7" Grid.Column="1" Name="EditorBookedOnTextBox" TextChanged="ReservationTextPropertyUpdated" />
+                                <TextBlock Grid.Row="7" Grid.Column="1" Padding="5,0" Text="Formát data 1.1.1970" Foreground="#FF949494" FontStyle="Italic"
+                                           IsHitTestVisible="False" HorizontalAlignment="Left" Visibility="{Binding Path=Text.Length, ElementName=EditorBookedOnTextBox, Converter={StaticResource HelperVisibilityConverter}}" />
+
+                                <WrapPanel Grid.Row="8" Grid.ColumnSpan="2">
+                                    <Button Margin="0,5,5,5" Content="{Binding Path=CurrentSelectionState, Converter={StaticResource ResourceKey='StateButtonConverter'}}" Name="ConfirmReservationButton" />
+                                    <Button Margin="5,5,0,5" Content="Zrušit změny" />
+                                </WrapPanel>
+                            </Grid>
+                        </Expander>
+
+                        <Expander Grid.Row="1" Name="FilterPicker" BorderThickness="1" BorderBrush="#858585" Margin="5" Padding="8,3" VerticalAlignment="Top" IsExpanded="False"
+                                  Header="Filtrování" MouseDown="RightPanelExpanderMouseHandle" MouseUp="RightPanelExpanderMouseHandle">
+
+                        </Expander>
+                    </Grid>
+                </ScrollViewer>
+            </Grid>
+        </TabItem>
+
+        <TabItem Header="Rozvržení sálu">
+
+        </TabItem>
+    </TabControl>
+</UserControl>
