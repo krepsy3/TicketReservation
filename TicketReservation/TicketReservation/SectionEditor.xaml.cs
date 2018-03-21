@@ -126,30 +126,19 @@ namespace TicketReservation
             }
         }
 
-        private void SaveReservation(int index, Reservation r)
+        private ReservationPropertiesContext StartSaving()
         {
             bool bookedonmalformed = false;
             if (EditorBookedOnTextBox.Text != "" && EditorBookedOnTextBox.Text.GetDateTime() == null) bookedonmalformed = true;
             bool seatnomalformed = false;
             if (EditorSeatNoTextBox.Text != "") try { int.Parse(EditorSeatNoTextBox.Text.Replace(" ", "")); } catch { seatnomalformed = true; }
 
-            if (contactchanged) r.Contact = newcontact;
-            if (kindchanged) r.Kind = newkind;
-            if (namechanged) r.Name = newname;
-            if (soldchanged) r.Sold = newsold;
-            if (ticketcodechanged) r.TicketCode = newticketcode;
-            if (userchanged) r.User = newuser;
-            if (bookedonchanged && !bookedonmalformed) r.BookedOn = newbookedon;
-            if (seatnochanged && !seatnomalformed) r.SeatNo = newseatno;
-
-            sectionManager.ChangeReservationAt(index, r);
-
             if (seatnomalformed || bookedonmalformed)
             {
                 string msg;
                 if ((seatnomalformed && !bookedonmalformed) || (!seatnomalformed && bookedonmalformed))
                 {
-                    msg = bookedonmalformed ? "Datum zápisu" : "Číslo stolu";
+                    msg = bookedonmalformed? "Datum zápisu" : "Číslo stolu";
                     msg += " nebylo změněno kvůli chybnému formátování.";
                 }
 
@@ -157,9 +146,22 @@ namespace TicketReservation
 
                 MessageBox.Show(msg, "Chyba formátování", MessageBoxButton.OK, MessageBoxImage.Information);
             }
+
+            return new ReservationPropertiesContext() { BookedOn = newbookedon, Contact = newcontact,
+                                                        Kind = newkind, Name = newname,
+                                                        SeatNo = newseatno, Sold = newsold,
+                                                        TicketCode = newticketcode, User = newuser,
+                                                        ChangeBookedOn = bookedonchanged && !bookedonmalformed, ChangeContact = contactchanged,
+                                                        ChangeKind = kindchanged, ChangeName = namechanged,
+                                                        ChangeSeatNo = seatnochanged && !seatnomalformed, ChangeSold = soldchanged,
+                                                        ChangeTicketCode = ticketcodechanged, ChangeUser = userchanged
+                                                      };
+            
         }
 
-
+        private void SaveReservation(Reservation item) { sectionManager.ChangeReservation(item, StartSaving()); }
+        private void SaveReservationAt(int index) { sectionManager.ChangeReservationAt(index, StartSaving()); }
+        private void SaveReservations(List<Reservation> reservations) { sectionManager.MultipleChangeReservation(reservations, StartSaving()); }
         #endregion
 
         #region Reservation Properties TextBoxes handle
@@ -190,11 +192,22 @@ namespace TicketReservation
         private int newseatno;
         private string newticketcode;
 
-        private void ReservationTextPropertyUpdated(object sender, TextChangedEventArgs e) { if (sender is Control) UpdateReservationPropsFields((Control)sender); }
-        private void ReservationSoldUpdated(object sender, RoutedEventArgs e) { if (sender is Control) UpdateReservationPropsFields((Control)sender); }
-        private void ReservationKindUpdated(object sender, SelectionChangedEventArgs e) { if (sender is Control) UpdateReservationPropsFields((Control)sender); }
+        private void ReservationTextPropertyUpdated(object sender, TextChangedEventArgs e) { if (sender is Control) UpdateReservationPropsFields((Control)sender, false); }
+        private void ReservationSoldUpdated(object sender, RoutedEventArgs e) { if (sender is Control) UpdateReservationPropsFields((Control)sender, false); }
+        private void ReservationKindUpdated(object sender, SelectionChangedEventArgs e) { if (sender is Control) UpdateReservationPropsFields((Control)sender, false); }
+        private void UpdateAllPropsFields(bool reset)
+        {
+            UpdateReservationPropsFields(EditorNameTextBox, reset);
+            UpdateReservationPropsFields(EditorContactTextBox, reset);
+            UpdateReservationPropsFields(EditorSeatNoTextBox, reset);
+            UpdateReservationPropsFields(EditorTicketCodeTextBox, reset);
+            UpdateReservationPropsFields(EditorUserTextBox, reset);
+            UpdateReservationPropsFields(EditorBookedOnTextBox, reset);
+            UpdateReservationPropsFields(EditorSoldCheckBox, reset);
+            UpdateReservationPropsFields(EditorKindComboBox, reset);
+        }
 
-        private void UpdateReservationPropsFields(Control sender)
+        private void UpdateReservationPropsFields(Control sender, bool reset)
         {
             switch (sender.Name)
             {
@@ -203,7 +216,7 @@ namespace TicketReservation
                     {
                         newname = EditorNameTextBox.Text;
 
-                        if (CurrentSelectionState == SelectionState.EditingMultiple || (CurrentSelectionState == SelectionState.EditingSingle && newname != ((Reservation)MainListView.SelectedItem).Name))
+                        if (!reset && (CurrentSelectionState == SelectionState.EditingMultiple || (CurrentSelectionState == SelectionState.EditingSingle && newname != ((Reservation)MainListView.SelectedItem).Name)))
                         {
                             namechanged = true;
                             PropertyControlChangedAdorner.AddToControl(EditorNameTextBox);
@@ -223,7 +236,7 @@ namespace TicketReservation
                     {
                         newcontact = EditorContactTextBox.Text;
 
-                        if (CurrentSelectionState == SelectionState.EditingMultiple || (CurrentSelectionState == SelectionState.EditingSingle && newcontact != ((Reservation)MainListView.SelectedItem).Contact))
+                        if (!reset && (CurrentSelectionState == SelectionState.EditingMultiple || (CurrentSelectionState == SelectionState.EditingSingle && newcontact != ((Reservation)MainListView.SelectedItem).Contact)))
                         {
                             contactchanged = true;
                             PropertyControlChangedAdorner.AddToControl(EditorContactTextBox);
@@ -260,7 +273,7 @@ namespace TicketReservation
                             newseatno = -1;
                         }
 
-                        if (CurrentSelectionState == SelectionState.EditingMultiple || (CurrentSelectionState == SelectionState.EditingSingle && newseatno != ((Reservation)MainListView.SelectedItem).SeatNo) || malformed) seatnochanged = true;
+                        if (!reset && (CurrentSelectionState == SelectionState.EditingMultiple || (CurrentSelectionState == SelectionState.EditingSingle && newseatno != ((Reservation)MainListView.SelectedItem).SeatNo) || malformed)) seatnochanged = true;
                         else seatnochanged = false;
                         
                         if (malformed)
@@ -292,7 +305,7 @@ namespace TicketReservation
                     {
                         newticketcode = EditorTicketCodeTextBox.Text;
 
-                        if (CurrentSelectionState == SelectionState.EditingMultiple || (CurrentSelectionState == SelectionState.EditingSingle && newticketcode != ((Reservation)MainListView.SelectedItem).TicketCode))
+                        if (!reset && (CurrentSelectionState == SelectionState.EditingMultiple || (CurrentSelectionState == SelectionState.EditingSingle && newticketcode != ((Reservation)MainListView.SelectedItem).TicketCode)))
                         {
                             ticketcodechanged = true;
                             PropertyControlChangedAdorner.AddToControl(EditorTicketCodeTextBox);
@@ -312,7 +325,7 @@ namespace TicketReservation
                     {
                         newuser = EditorUserTextBox.Text;
 
-                        if (CurrentSelectionState == SelectionState.EditingMultiple || (CurrentSelectionState == SelectionState.EditingSingle && newuser != ((Reservation)MainListView.SelectedItem).User))
+                        if (!reset && (CurrentSelectionState == SelectionState.EditingMultiple || (CurrentSelectionState == SelectionState.EditingSingle && newuser != ((Reservation)MainListView.SelectedItem).User)))
                         {
                             userchanged = true;
                             PropertyControlChangedAdorner.AddToControl(EditorUserTextBox);
@@ -344,9 +357,9 @@ namespace TicketReservation
                             else malformed = true;
                         }
 
-                        else malformed = true;
+                        else malformed = false;
                         
-                        if (CurrentSelectionState == SelectionState.EditingMultiple || (CurrentSelectionState == SelectionState.EditingSingle && newbookedon != ((Reservation)MainListView.SelectedItem).BookedOn) || malformed) bookedonchanged = true;
+                        if (!reset && (CurrentSelectionState == SelectionState.EditingMultiple || (CurrentSelectionState == SelectionState.EditingSingle && newbookedon != ((Reservation)MainListView.SelectedItem).BookedOn) || malformed)) bookedonchanged = true;
                         else bookedonchanged = false;
 
                         if (malformed)
@@ -378,7 +391,7 @@ namespace TicketReservation
                     {
                         newsold = (bool)EditorSoldCheckBox.IsChecked;
 
-                        if (CurrentSelectionState == SelectionState.EditingMultiple || (CurrentSelectionState == SelectionState.EditingSingle && newsold != ((Reservation)MainListView.SelectedItem).Sold))
+                        if (!reset && (CurrentSelectionState == SelectionState.EditingMultiple || (CurrentSelectionState == SelectionState.EditingSingle && newsold != ((Reservation)MainListView.SelectedItem).Sold)))
                         {
                             soldchanged = true;
                             PropertyControlChangedAdorner.AddToControl(EditorSoldCheckBox);
@@ -398,7 +411,7 @@ namespace TicketReservation
                     {
                         newkind = (ReservationKind)EditorKindComboBox.SelectedIndex;
 
-                        if (CurrentSelectionState == SelectionState.EditingMultiple || (CurrentSelectionState == SelectionState.EditingSingle && newkind != ((Reservation)MainListView.SelectedItem).Kind))
+                        if (!reset && (CurrentSelectionState == SelectionState.EditingMultiple || (CurrentSelectionState == SelectionState.EditingSingle && newkind != ((Reservation)MainListView.SelectedItem).Kind)))
                         {
                             kindchanged = true;
                             PropertyControlChangedAdorner.AddToControl(EditorKindComboBox);
@@ -421,19 +434,183 @@ namespace TicketReservation
 
         private void ReservationSelected(object sender, SelectionChangedEventArgs e)
         {
-            //Update Section's editing state (set CurrentSelectionState) and get the previous state as lastselstate
-            #region stateupdate
-            SelectionState lastselstate = CurrentSelectionState;          
-            switch (MainListView.SelectedItems.Count)
+            if (!newselectionhandled)
             {
-                case 0: CurrentSelectionState = SelectionState.Adding; break;
-                case 1: CurrentSelectionState = SelectionState.EditingSingle; break;
-                default: CurrentSelectionState = SelectionState.EditingMultiple; break;
+                #region Selection State Update
+                SelectionState lastselstate = CurrentSelectionState;
+                switch (MainListView.SelectedItems.Count)
+                {
+                    case 0: CurrentSelectionState = SelectionState.Adding; break;
+                    case 1: CurrentSelectionState = SelectionState.EditingSingle; break;
+                    default: CurrentSelectionState = SelectionState.EditingMultiple; break;
+                }
+                #endregion
+                #region lastitem
+                Reservation lastitem = null;
+                if (lastselstate == SelectionState.EditingSingle)
+                {
+                    if (CurrentSelectionState == SelectionState.EditingSingle || CurrentSelectionState == SelectionState.Adding) lastitem = (Reservation)e.RemovedItems[0];
+                    else
+                    {
+                        switch (e.RemovedItems.Count)
+                        {
+                            case 0:
+                                {
+                                    foreach (object selection in MainListView.SelectedItems)
+                                    {
+                                        bool islast = false;
+                                        foreach (object added in e.AddedItems) if (selection != added) islast = true;
+                                        if (islast)
+                                        {
+                                            lastitem = (Reservation)selection;
+                                            break;
+                                        }
+                                    }
+                                    break;
+                                }
+
+                            case 1: lastitem = (Reservation)e.RemovedItems[0]; break;
+                            default: break;
+                        }
+                    }
+                }
+
+                bool gotlastitem = lastitem != null;
+                #endregion
+                #region laststate handle
+                bool switchtoprevious = false;
+                switch (lastselstate)
+                {
+                    case SelectionState.Adding:
+                        {
+                            if (CurrentSelectionState != SelectionState.Adding)
+                            {
+                                bookedon = newbookedon;
+                                contact = newcontact;
+                                kind = newkind;
+                                name = newname;
+                                seatno = newseatno;
+                                sold = newsold;
+                                ticketcode = newticketcode;
+                                user = newuser;
+                            }
+                            break;
+                        }
+
+                    case SelectionState.EditingSingle:
+                    case SelectionState.EditingMultiple:
+                        {
+                            bool changed = bookedonchanged || contactchanged || kindchanged || namechanged || seatnochanged || soldchanged || ticketcodechanged || userchanged;
+                            if ((lastselstate == SelectionState.EditingMultiple && CurrentSelectionState == SelectionState.EditingMultiple) || !changed) break;
+                            string msg = lastselstate == SelectionState.EditingSingle ? "V předchozí editované rezervaci jste provedli neuložené změny. Uložit nyní? Můžete se také vrátit k její editaci."
+                                                                                      : "V režimu hromadné úpravy jste provedli neuložené změny. Uložit nyní? Můžete se také vrátit k hromadné editaci přechozího výběru.";
+                            string tit = lastselstate == SelectionState.EditingSingle ? "Neuložené změny v rezervaci" : "Neuložené změny hromadných úprav";
+                            switch (MessageBox.Show(msg, tit, MessageBoxButton.YesNoCancel, MessageBoxImage.Question, MessageBoxResult.Yes))
+                            {
+                                default: break;
+                                case MessageBoxResult.Cancel: switchtoprevious = true; break;
+                                case MessageBoxResult.Yes:
+                                    {
+                                        if (lastselstate == SelectionState.EditingSingle && gotlastitem) SaveReservation(lastitem);
+                                        else SaveReservations((List<Reservation>)((e.RemovedItems as List<object>).Cast<Reservation>()));
+                                        break;
+                                    }
+                            }
+                            break;
+                        }
+                }
+                #endregion
+                #region currentstate handle
+                if (switchtoprevious)
+                {
+                    if (lastselstate == SelectionState.EditingSingle)
+                    {
+                        newselectionhandled = true;
+                        MainListView.SelectedIndex = MainListView.Items.IndexOf(lastitem);
+                    }
+
+                    else
+                    {
+                        newselectionhandled = true;
+                        MainListView.SelectedItems.Clear();
+
+                        foreach(object o in e.RemovedItems)
+                        {
+                            newselectionhandled = true;
+                            MainListView.SelectedItems.Add(o);
+                        }
+                    }
+
+                    CurrentSelectionState = lastselstate;
+                }
+
+                else
+                {
+                    switch (CurrentSelectionState)
+                    {
+                        #region prepare editor for adding
+                        case SelectionState.Adding:
+                            {
+                                if (lastselstate != SelectionState.Adding)
+                                {
+                                    EditorContactTextBox.Text = newcontact = contact;
+                                    EditorKindComboBox.SelectedIndex = (int)(newkind = kind);
+                                    EditorNameTextBox.Text = newname = name;
+                                    EditorSeatNoTextBox.Text = (newseatno = seatno).ToString();
+                                    EditorSoldCheckBox.IsChecked = newsold = sold;
+                                    EditorTicketCodeTextBox.Text = newticketcode = ticketcode;
+                                    EditorUserTextBox.Text = newuser = user;
+
+                                    newbookedon = bookedon;
+                                    EditorBookedOnTextBox.Text = newbookedon.Day + "." + newbookedon.Month + "." + newbookedon.Year;
+                                }
+
+                                break;
+                            }
+                        #endregion
+                        #region prepare editor for single item editing
+                        case SelectionState.EditingSingle:
+                            {
+                                Reservation propertysource = (Reservation)MainListView.SelectedItem;
+
+                                EditorBookedOnTextBox.Text = propertysource.BookedOn.Day + "." + propertysource.BookedOn.Month + "." + propertysource.BookedOn.Year;
+                                EditorContactTextBox.Text = propertysource.Contact;
+                                EditorKindComboBox.SelectedIndex = (int)(propertysource.Kind);
+                                EditorNameTextBox.Text = propertysource.Name;
+                                EditorSeatNoTextBox.Text = propertysource.SeatNo.ToString();
+                                EditorSoldCheckBox.IsChecked = propertysource.Sold;
+                                EditorTicketCodeTextBox.Text = propertysource.TicketCode;
+                                EditorUserTextBox.Text = propertysource.User;
+
+                                break;
+                            }
+                        #endregion
+                        #region prepare editor for multiple item editing
+                        case SelectionState.EditingMultiple:
+                            {
+                                newcontact = EditorContactTextBox.Text = "";
+                                newkind = ((ReservationKind)(EditorKindComboBox.SelectedIndex = -1));
+                                newname = EditorNameTextBox.Text = "";
+                                newsold = ((bool)(EditorSoldCheckBox.IsChecked = false));
+                                newticketcode = EditorTicketCodeTextBox.Text = "";
+                                newuser = EditorUserTextBox.Text = "";
+
+                                EditorBookedOnTextBox.Text = "";
+                                newbookedon = new DateTime();
+                                EditorSeatNoTextBox.Text = "";
+                                newseatno = -1;
+
+                                break;
+                            }
+                        #endregion
+                    }
+                }
+                #endregion
+
+                UpdateAllPropsFields(true);
             }
-            #endregion
 
-            bool changed = bookedonchanged || contactchanged || kindchanged || namechanged || seatnochanged || soldchanged || ticketcodechanged || userchanged;
-
+            else newselectionhandled = false;
         }
         #endregion
     }

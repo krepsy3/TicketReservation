@@ -14,9 +14,8 @@ namespace TicketReservation
         protected void UpdateProperty(string name) { PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name)); }
 
         #region Properties
-        private ObservableCollection<Reservation> _reservationsinternal;
-        private ObservableCollection<Reservation> _reservations { get { return _reservationsinternal; } set { _reservationsinternal = value; UpdateProperty(nameof(Reservations)); } }
-        public ObservableCollection<Reservation> Reservations { get { return new ObservableCollection<Reservation>(_reservations); } }
+        private ObservableCollection<Reservation> _reservations;
+        public ObservableCollection<Reservation> Reservations { get { return _reservations; } }
 
         private string _name;
         public string Name
@@ -55,12 +54,17 @@ namespace TicketReservation
             _reservations.Remove(item);
         }
 
-        public void ChangeReservationAt(int index, Reservation replacement)
+        public void ChangeReservationAt(int index, ReservationPropertiesContext context)
         {
-            _reservations[index] = replacement;
+            _reservations[index] = context.ApplyChanges(_reservations[index]);
         }
 
-        public void MultipleChangeReservation(List<Reservation> reservations)
+        public void ChangeReservation(Reservation item, ReservationPropertiesContext context)
+        {
+            ChangeReservationAt(_reservations.IndexOf(item), context);
+        }
+
+        public void MultipleChangeReservation(List<Reservation> reservations, ReservationPropertiesContext context)
         {
 
         }
