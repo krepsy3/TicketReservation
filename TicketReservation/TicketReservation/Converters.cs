@@ -119,7 +119,8 @@ namespace TicketReservation
             else
             {
                 if ((ReservationKind)value == ReservationKind.Stall) return "Stání";
-                else return "Stůl";
+                else if ((ReservationKind)value == ReservationKind.Table) return "Stůl";
+                else return "";
             }
         }
 

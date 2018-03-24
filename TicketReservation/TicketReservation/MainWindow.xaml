@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:TicketReservation"
         mc:Ignorable="d"
-        Title="Evidence rezervací vstupenek" Height="550" Width="700" MinHeight="550" MinWidth="700" Loaded="WinLoaded">
+        Title="Evidence rezervací vstupenek" Height="550" Width="700" MinHeight="550" MinWidth="700" ContentRendered="WinRendered">
     <Window.Resources>
         <local:TicketKindEnumToStringConverter x:Key="KindStringConverter" />
         <local:TextBoxLengthToHelpTextBlockVisibilityConverter x:Key="HelperVisibilityConverter" />

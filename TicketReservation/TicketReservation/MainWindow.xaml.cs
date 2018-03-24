@@ -25,10 +25,10 @@ namespace TicketReservation
             fileManager = new Filemanager();
 
             InitializeComponent();
-            DefaultKindComboBox.ItemsSource = Enum.GetValues(typeof(ReservationKind));
+            DefaultKindComboBox.ItemsSource = ((ReservationKind[])Enum.GetValues(typeof(ReservationKind))).ToList().GetRange(0, 2);
         }
 
-        private void WinLoaded(object sender, RoutedEventArgs e)
+        private void WinRendered(object sender, EventArgs e)
         {
             foreach (SectionEditor se in fileManager.LoadFile("test.xml", this))
             {

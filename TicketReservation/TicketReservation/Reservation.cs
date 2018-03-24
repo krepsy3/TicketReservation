@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace TicketReservation
 {
-    public enum ReservationKind { Table, Stall }
+    public enum ReservationKind { None = -1, Table = 0, Stall = 1 }
 
     public class Reservation : INotifyPropertyChanged
     {

@@ -40,8 +40,6 @@ namespace TicketReservation
         {
             sectionManager = sm;
             SectionName = sectionName;
-            bookedon = new DateTime(0);
-            newbookedon = new DateTime(0);
             newselectionhandled = false;
             CurrentSelectionState = SelectionState.Adding;
 
@@ -50,15 +48,12 @@ namespace TicketReservation
             StateTextBlock.DataContext = this;
             ConfirmReservationButton.DataContext = this;
 
-            EditorKindComboBox.ItemsSource = Enum.GetValues(typeof(ReservationKind));
+            EditorKindComboBox.ItemsSource = ((ReservationKind[])Enum.GetValues(typeof(ReservationKind))).ToList().GetRange(0, 2);
             MainListView.AddHandler(Thumb.DragDeltaEvent, new DragDeltaEventHandler(CheckColumnWidth), true);
         }
 
-        public SectionEditor(SectionManager sm, string sectionName, IDefaultNewResPropSource defSource) : this(sm, sectionName)
-        {
-            DefaultPropsSource = defSource;
-        }
-        
+        public SectionEditor(SectionManager sm, string sectionName, IDefaultNewResPropSource defSource) : this(sm, sectionName) { DefaultPropsSource = defSource; }
+
         public List<Reservation> GetReservations()
         {
             return new List<Reservation>(sectionManager.Reservations);
@@ -104,15 +99,12 @@ namespace TicketReservation
         }
         #endregion
 
-        #region Reservation manipulations
-        private void DeleteReservationCtMenu(object sender, RoutedEventArgs e)
+        #region Commands
+        private void DeleteReservation(object sender, ExecutedRoutedEventArgs e)
         {
             if (MainListView.SelectedIndex >= 0 && MainListView.SelectedItems.Count == 1)
             {
-                if (MessageBox.Show("Jste si jisti, že chcete smazat tuto rezervaci?", "Potvrzení smazání", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) == MessageBoxResult.Yes)
-                {
-                    sectionManager.RemoveReservationAt(MainListView.SelectedIndex);
-                }
+                if (MessageBox.Show("Jste si jisti, že chcete smazat tuto rezervaci?", "Potvrzení smazání", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) == MessageBoxResult.Yes) sectionManager.RemoveReservationAt(MainListView.SelectedIndex);
             }
 
             else if (MainListView.SelectedIndex >= 0 && MainListView.SelectedItems.Count > 1)
@@ -120,13 +112,17 @@ namespace TicketReservation
                 if (MessageBox.Show("Jste si jisti, že chcete smazat tyto rezervace?", "Potvrzení smazání", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) == MessageBoxResult.Yes)
                 {
                     List<Reservation> temp = new List<Reservation>();
-                    foreach (Reservation r in MainListView.SelectedItems) { temp.Add(r); } 
+                    foreach (Reservation r in MainListView.SelectedItems) { temp.Add(r); }
                     foreach (Reservation r in temp) { sectionManager.RemoveReservation(r); }
                 }
             }
         }
 
-        private ReservationPropertiesContext StartSaving()
+        private void CanDeleteReservation(object sender, CanExecuteRoutedEventArgs e) { if (MainListView.SelectedIndex >= 0) e.CanExecute = true; else e.CanExecute = false; }
+        #endregion
+
+        #region Reservation manipulations
+        private ReservationPropertiesContext SaveGetContext()
         {
             bool bookedonmalformed = false;
             if (EditorBookedOnTextBox.Text != "" && EditorBookedOnTextBox.Text.GetDateTime() == null) bookedonmalformed = true;
@@ -159,19 +155,45 @@ namespace TicketReservation
             
         }
 
-        private void SaveReservation(Reservation item) { sectionManager.ChangeReservation(item, StartSaving()); }
-        private void SaveReservationAt(int index) { sectionManager.ChangeReservationAt(index, StartSaving()); }
-        private void SaveReservations(List<Reservation> reservations) { sectionManager.MultipleChangeReservation(reservations, StartSaving()); }
+        private void SaveReservation(Reservation item) { sectionManager.ChangeReservation(item, SaveGetContext()); }
+        private void SaveReservationAt(int index) { sectionManager.ChangeReservationAt(index, SaveGetContext()); }
+        private void SaveReservations(List<Reservation> reservations) { sectionManager.MultipleChangeReservation(reservations, SaveGetContext()); }
+        
+        private void ConfirmReservation(object sender, RoutedEventArgs e)
+        {
+            switch (CurrentSelectionState)
+            {
+                case SelectionState.Adding:
+                    {
+                        break;
+                    }
+
+                case SelectionState.EditingSingle:
+                    {
+                        break;
+                    }
+
+                case SelectionState.EditingMultiple:
+                    {
+                        break;
+                    }
+            }
+        }
+
+        private void CancelReservation(object sender, RoutedEventArgs e)
+        {
+            ResetAdding();
+        }
         #endregion
 
-        #region Reservation Properties TextBoxes handle
-        private DateTime bookedon;
+            #region Reservation Properties TextBoxes handle
+        private DateTime bookedon = new DateTime();
         private string user;
-        private ReservationKind kind;
+        private ReservationKind kind = ReservationKind.None;
         private string name;
         private string contact;
         private bool sold;
-        private int seatno;
+        private int seatno = -1;
         private string ticketcode;
 
         private bool bookedonchanged;
@@ -183,13 +205,13 @@ namespace TicketReservation
         private bool seatnochanged;
         private bool ticketcodechanged;
 
-        private DateTime newbookedon;
+        private DateTime newbookedon = new DateTime();
         private string newuser;
-        private ReservationKind newkind;
+        private ReservationKind newkind = ReservationKind.None;
         private string newname;
         private string newcontact;
         private bool newsold;
-        private int newseatno;
+        private int newseatno = -1;
         private string newticketcode;
 
         private void ReservationTextPropertyUpdated(object sender, TextChangedEventArgs e) { if (sender is Control) UpdateReservationPropsFields((Control)sender, false); }
@@ -553,16 +575,14 @@ namespace TicketReservation
                             {
                                 if (lastselstate != SelectionState.Adding)
                                 {
-                                    EditorContactTextBox.Text = newcontact = contact;
-                                    EditorKindComboBox.SelectedIndex = (int)(newkind = kind);
-                                    EditorNameTextBox.Text = newname = name;
-                                    EditorSeatNoTextBox.Text = (newseatno = seatno).ToString();
-                                    EditorSoldCheckBox.IsChecked = newsold = sold;
-                                    EditorTicketCodeTextBox.Text = newticketcode = ticketcode;
-                                    EditorUserTextBox.Text = newuser = user;
-
-                                    newbookedon = bookedon;
-                                    EditorBookedOnTextBox.Text = newbookedon.Day + "." + newbookedon.Month + "." + newbookedon.Year;
+                                    EditorBookedOnTextBox.Text = bookedon.Ticks > 0 ? bookedon.Day + "." + bookedon.Month + "." + bookedon.Year : "";
+                                    EditorContactTextBox.Text = contact;
+                                    EditorKindComboBox.SelectedIndex = (int)kind;
+                                    EditorNameTextBox.Text = name;
+                                    EditorSeatNoTextBox.Text = seatno.ToString();
+                                    EditorSoldCheckBox.IsChecked = sold;
+                                    EditorTicketCodeTextBox.Text = ticketcode;
+                                    EditorUserTextBox.Text = user;
                                 }
 
                                 break;
@@ -573,7 +593,7 @@ namespace TicketReservation
                             {
                                 Reservation propertysource = (Reservation)MainListView.SelectedItem;
 
-                                EditorBookedOnTextBox.Text = propertysource.BookedOn.Day + "." + propertysource.BookedOn.Month + "." + propertysource.BookedOn.Year;
+                                EditorBookedOnTextBox.Text = propertysource.BookedOn.Ticks > 0 ? propertysource.BookedOn.Day + "." + propertysource.BookedOn.Month + "." + propertysource.BookedOn.Year : "";
                                 EditorContactTextBox.Text = propertysource.Contact;
                                 EditorKindComboBox.SelectedIndex = (int)(propertysource.Kind);
                                 EditorNameTextBox.Text = propertysource.Name;
@@ -611,6 +631,46 @@ namespace TicketReservation
             }
 
             else newselectionhandled = false;
+        }
+
+        private void ResetAdding()
+        {
+            if (DefaultPropsSource != null)
+            {
+                if (DefaultPropsSource.GetDefaultBookedOn() != null) bookedon = (DateTime)DefaultPropsSource.GetDefaultBookedOn();
+                else bookedon = new DateTime();
+
+                kind = DefaultPropsSource.GetDefaultKind();
+                sold = DefaultPropsSource.GetDefaultSold();
+                user = DefaultPropsSource.GetDefaultUser();
+            }
+
+            else
+            {
+                bookedon = new DateTime();
+                kind = ReservationKind.None;
+                sold = false;
+                user = "";
+            }
+
+            contact = "";
+            name = "";
+            seatno = -1;
+            ticketcode = "";
+            
+            if (CurrentSelectionState == SelectionState.Adding)
+            {
+                EditorBookedOnTextBox.Text = bookedon.Ticks > 0 ? bookedon.Day + "." + bookedon.Month + "." + bookedon.Year : "";
+                EditorContactTextBox.Text = contact;
+                EditorKindComboBox.SelectedIndex = (int)kind;
+                EditorNameTextBox.Text = name;
+                EditorSeatNoTextBox.Text = seatno.ToString();
+                EditorSoldCheckBox.IsChecked = sold;
+                EditorTicketCodeTextBox.Text = ticketcode;
+                EditorUserTextBox.Text = user;
+
+                UpdateAllPropsFields(false);
+            }
         }
         #endregion
     }

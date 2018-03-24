@@ -17,6 +17,11 @@
         <local:InvertedBooleanToVisibilityConverter x:Key="InvBoolToVisConverter" />
         <local:TextBoxLengthToHelpTextBlockVisibilityConverter x:Key="HelperVisibilityConverter" />
     </UserControl.Resources>
+
+    <UserControl.CommandBindings>
+        <CommandBinding Command="ApplicationCommands.Delete" Executed="DeleteReservation" CanExecute="CanDeleteReservation" />
+    </UserControl.CommandBindings>
+    
     <TabControl>
         <TabItem Header="Tabulka rezervací">
             <Grid Name="MainGrid">
@@ -39,7 +44,7 @@
                         </Style>
 
                         <ContextMenu x:Key="ItemContextMenu">
-                            <MenuItem Header="Smazat" Click="DeleteReservationCtMenu" />
+                            <MenuItem Header="Smazat" Command="ApplicationCommands.Delete" />
                         </ContextMenu>
                     </ListView.Resources>
                     <ListView.ItemContainerStyle>
@@ -178,8 +183,8 @@
                                            IsHitTestVisible="False" HorizontalAlignment="Left" Visibility="{Binding Path=Text.Length, ElementName=EditorBookedOnTextBox, Converter={StaticResource HelperVisibilityConverter}}" />
 
                                 <WrapPanel Grid.Row="8" Grid.ColumnSpan="2">
-                                    <Button Margin="0,5,5,5" Content="{Binding Path=CurrentSelectionState, Converter={StaticResource ResourceKey='StateButtonConverter'}}" Name="ConfirmReservationButton" />
-                                    <Button Margin="5,5,0,5" Content="Zrušit změny" />
+                                    <Button Margin="0,5,5,5" Content="{Binding Path=CurrentSelectionState, Converter={StaticResource ResourceKey='StateButtonConverter'}}" Name="ConfirmReservationButton" Click="ConfirmReservation" />
+                                    <Button Margin="5,5,0,5" Content="Zrušit změny" Click="CancelReservation" />
                                 </WrapPanel>
                             </Grid>
                         </Expander>
@@ -194,7 +199,12 @@
         </TabItem>
 
         <TabItem Header="Rozvržení sálu">
-
+            <ScrollViewer HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Visible" Margin="-2">
+                <Grid VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Margin="6">
+                    <Rectangle Stroke="LightSteelBlue" RadiusX="2" RadiusY="2" Margin="-2" />
+                    <Grid VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Name="RoomLayoutGrid" />
+                </Grid>
+            </ScrollViewer>
         </TabItem>
     </TabControl>
 </UserControl>
