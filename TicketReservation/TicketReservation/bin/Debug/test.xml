@@ -4,8 +4,8 @@
 		<Section SectionName="Sekce1">
 			<Reservations>
 				<Reservation Name="Jan Novák" Kind="0" SeatNo="23" TicketCode="1342" Sold="True" User="Admin" BookedOn="636504480000000000" Contact="jnovak@seznam.cz" />
-				<Reservation Name="Josef Novák" Kind="0" SeatNo="24" TicketCode="1398" Sold="False" User="Admin" BookedOn="636504480000000000" />
-				<Reservation Name="Karel Král" Kind="1" SeatNo="-1" TicketCode="1452" Sold="True" User="Admin" BookedOn="636506208000000000" Contact="kkk@gmail.com" />
+				<Reservation Name="Josef Novák" Kind="0" SeatNo="24" TicketCode="1398" Sold="False" User="Admin" BookedOn="636504480000000000" Contact="" />
+				<Reservation Name="Karel Králů" Kind="1" SeatNo="-1" TicketCode="1452" Sold="True" User="Admin" BookedOn="636506208000000000" Contact="kkk@gmail.com" />
 			</Reservations>
 		</Section>
 	</Sections>

@@ -202,4 +202,46 @@ namespace TicketReservation
             return Binding.DoNothing;
         }
     }
+
+    public class SectionInfoToStringInformationConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            string result = "Informace o vybrané sekci:";
+            if (value == null || !(value is SectionEditor)) return result;
+            else
+            {
+                SectionEditor src = (SectionEditor)value;
+
+                result += "\n" + "Mateřský soubor: " + src.FileName;
+                result += "\n" + (src.Bound ? "Mateřský soubor je načten" : "Mateřský soubor není načten");
+                result += "\n" + "Rozvržení sálu: (COMING SOON)";
+
+                return result;
+            }
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            return Binding.DoNothing;
+        }
+    }
+
+    public class RoomLayoutInfoToStringInformationConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            string result = "Rozložení sálu - COMING SOON";
+            if (value == null || !(value is RoomLayout)) return result;
+            else
+            {
+                return result;
+            }
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            return Binding.DoNothing;
+        }
+    }
 }

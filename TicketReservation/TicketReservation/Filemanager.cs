@@ -12,20 +12,18 @@ namespace TicketReservation
     {
         public readonly string fileVersionAttributeString = "1";
 
-        public List<SectionEditor> LoadFile(string fileName) { return LoadFile(fileName, null); }
-        public List<SectionEditor> LoadFile(string fileName, IDefaultNewResPropSource defsource)
+        public ReservationFileInfo LoadFile(string fileName) { return LoadFile(fileName, null); }
+        public ReservationFileInfo LoadFile(string fileName, IDefaultNewResPropSource defsource)
         {
-            List<SectionEditor> result = new List<SectionEditor>();
-
-            List<Reservation> reservations = new List<Reservation>();
-
             if (File.Exists(fileName))
             {
+                ReservationFileInfo result = new ReservationFileInfo(fileName);
+
                 XmlDocument doc = new XmlDocument();
                 doc.Load(fileName);
                 XmlElement root = doc.DocumentElement;
 
-                if (root.GetAttribute("Version") == fileVersionAttributeString)
+                if (root.Name == "ReservationFile" && root.GetAttribute("Version") == fileVersionAttributeString)
                 {
                     foreach (XmlNode node in root.ChildNodes)
                     {
@@ -36,6 +34,7 @@ namespace TicketReservation
                                 if (sectionsnode.Name == "Section")
                                 {
                                     string sectionname = (sectionsnode as XmlElement).GetAttribute("SectionName");
+                                    List<Reservation> reservations = new List<Reservation>();
 
                                     foreach (XmlNode sectionnode in sectionsnode.ChildNodes)
                                     {
@@ -61,23 +60,28 @@ namespace TicketReservation
                                         }
                                     }
 
-                                    if (defsource != null) result.Add(new SectionEditor(new SectionManager(reservations), sectionname, defsource));
-                                    else result.Add(new SectionEditor(new SectionManager(reservations), sectionname));
-
-                                    reservations.Clear();
+                                    if (defsource != null) result.Sections.Add(new SectionEditor(new SectionManager(reservations), sectionname, defsource));
+                                    else result.Sections.Add(new SectionEditor(new SectionManager(reservations), sectionname));
                                 }
                             }
                         }
                     }
                 }
+
+                return result;
             }
 
-            return result;
+            else return null;
         }
 
-        public void SaveFile(string fileName, List<SectionEditor> sections)
+        public void Save(ReservationFileInfo savefileinfo)
         {
-            using (XmlWriter xw = XmlWriter.Create(new FileStream(fileName, FileMode.Create), new XmlWriterSettings() { Indent = true, IndentChars = "	", Encoding = Encoding.UTF8 }))
+            SaveFile(savefileinfo.FullName, savefileinfo.Sections, savefileinfo.Layouts);
+        }
+
+        public void SaveFile(string path, IEnumerable<SectionEditor> sections, IEnumerable<RoomLayout> layouts)
+        {
+            using (XmlWriter xw = XmlWriter.Create(new FileStream(path, FileMode.Create), new XmlWriterSettings() { Indent = true, IndentChars = "	", Encoding = Encoding.UTF8 }))
             {
                 xw.WriteStartDocument();
                 xw.WriteStartElement("ReservationFile");
@@ -90,7 +94,7 @@ namespace TicketReservation
                     xw.WriteAttributeString("SectionName", se.SectionName);
 
                     List<Reservation> reservations = se.GetReservations();
-                    xw.WriteStartElement("Reservations"); 
+                    xw.WriteStartElement("Reservations");
                     foreach (Reservation reservation in reservations)
                     {
                         xw.WriteStartElement("Reservation");
@@ -107,8 +111,6 @@ namespace TicketReservation
                         xw.WriteEndElement();
                     }
                     xw.WriteEndElement();
-
-
 
                     xw.WriteEndElement();
                 }

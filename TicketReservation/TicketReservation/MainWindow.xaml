@@ -5,17 +5,39 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:TicketReservation"
         mc:Ignorable="d"
-        Title="Evidence rezervací vstupenek" Height="550" Width="700" MinHeight="550" MinWidth="700" ContentRendered="WinRendered">
+        Title="Evidence rezervací vstupenek" Height="550" Width="700" MinHeight="550" MinWidth="700" ContentRendered="WinRendered" Closing="OnWinClose">
     <Window.Resources>
         <local:TicketKindEnumToStringConverter x:Key="KindStringConverter" />
         <local:TextBoxLengthToHelpTextBlockVisibilityConverter x:Key="HelperVisibilityConverter" />
         <local:ReservationFileInfoToStringInformationConverter x:Key="LoadedFilesInfoConverter" />
+        <local:SectionInfoToStringInformationConverter x:Key="LoadedSectionsInfoConverter" />
+        <local:RoomLayoutInfoToStringInformationConverter x:Key="LoadedRoomsInfoConverter" />
     </Window.Resources>
+
+    <Window.CommandBindings>
+        <CommandBinding Command="ApplicationCommands.New" CanExecute="CommandCanExecute" Executed="CreateFile" />
+        <CommandBinding Command="ApplicationCommands.Open" CanExecute="CommandCanExecute" Executed="OpenFile" />
+        <CommandBinding Command="ApplicationCommands.Save" CanExecute="CommandCanExecute" Executed="SaveFile" />
+        <CommandBinding Command="local:CustomCommands.SaveAs" CanExecute="CommandCanExecute" Executed="SaveFileAs" />
+        <CommandBinding Command="local:CustomCommands.Exit" CanExecute="CommandCanExecute" Executed="Exit" />
+        <CommandBinding Command="ApplicationCommands.Help" CanExecute="CommandCanExecute" Executed="DisplayHelp" />
+        <CommandBinding Command="local:CustomCommands.About" CanExecute="CommandCanExecute" Executed="DisplayAbout" />
+    </Window.CommandBindings>
     
     <DockPanel>
         <Menu DockPanel.Dock="Top" Padding="5,0">
-            <MenuItem Header="Soubor"></MenuItem>
-            <MenuItem Header="Info"></MenuItem>
+            <MenuItem Header="Soubor">
+                <MenuItem Header="Nový" Command="ApplicationCommands.New" />
+                <MenuItem Header="Otevřít" Command="ApplicationCommands.Open" />
+                <MenuItem Header="Uložit" Command="ApplicationCommands.Save" />
+                <MenuItem Header="Uložit jako..." Command="local:CustomCommands.SaveAs" />
+                <Separator />
+                <MenuItem Header="Zavřít" Command="local:CustomCommands.Exit" />
+            </MenuItem>
+            <MenuItem Header="Info">
+                <MenuItem Header="Nápověda" Command="ApplicationCommands.Help" />
+                <MenuItem Header="O programu" Command="local:CustomCommands.About" />
+            </MenuItem>
         </Menu>
 
         <Expander DockPanel.Dock="Top" Margin="5" Padding="8,2" Header="Výchozí hodnoty pro nové rezervace" VerticalAlignment="Top" BorderThickness="1" BorderBrush="#FF858585" MouseDown="DefExpanderMouseDown">
@@ -80,15 +102,23 @@
                     </Grid.ColumnDefinitions>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />            
+                        <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
-                    <TextBlock Text="Načtené soubory:" TextDecorations="Underline" Grid.Column="0" HorizontalAlignment="Center" Margin="5" />
-                    <TextBlock Text="Načtené sekce:" TextDecorations="Underline" Grid.Column="1" HorizontalAlignment="Center" Margin="5" />
-                    <TextBlock Text="Načtené sály:" TextDecorations="Underline" Grid.Column="2" HorizontalAlignment="Center" Margin="5" />
+                    <WrapPanel Grid.ColumnSpan="3">
+                        <Button Content="Přidat sekci" Margin="5" Click="AddSection" />
+                    </WrapPanel>
+                    
+                    <Separator Grid.Row="1" Grid.ColumnSpan="3" />
 
-                    <ListBox Grid.Row="1" Grid.Column="0" ItemsSource="{Binding LoadedFiles}" Name="LoadedFilesListBox" Margin="5,0" SelectionMode="Single" MouseDown="ListBoxDeselect" Padding="0,0,10,0">
+                    <TextBlock Text="Načtené soubory:" TextDecorations="Underline" Grid.Row="2" Grid.Column="0" HorizontalAlignment="Center" Margin="5" />
+                    <TextBlock Text="Načtené sekce:" TextDecorations="Underline" Grid.Row="2" Grid.Column="1" HorizontalAlignment="Center" Margin="5" />
+                    <TextBlock Text="Načtené sály:" TextDecorations="Underline" Grid.Row="2" Grid.Column="2" HorizontalAlignment="Center" Margin="5" />
+
+                    <ListBox Grid.Row="3" Grid.Column="0" ItemsSource="{Binding LoadedFiles}" Name="LoadedFilesListBox" Margin="5,0" SelectionMode="Single" MouseDown="ListBoxDeselect" Padding="0,0,10,0">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <Grid>
@@ -104,7 +134,7 @@
                             </DataTemplate>
                         </ListBox.ItemTemplate>
                     </ListBox>
-                    <ListBox Grid.Row="1" Grid.Column="1" ItemsSource="{Binding}" Name="LoadedSectionsListBox" Margin="5,0" SelectionMode="Single" MouseDown="ListBoxDeselect" Padding="0,0,10,0">
+                    <ListBox Grid.Row="3" Grid.Column="1" ItemsSource="{Binding LoadedSections}" Name="LoadedSectionsListBox" Margin="5,0" SelectionMode="Single" MouseDown="ListBoxDeselect" Padding="0,0,10,0">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <Grid>
@@ -118,7 +148,7 @@
                             </DataTemplate>
                         </ListBox.ItemTemplate>
                     </ListBox>
-                    <ListBox Grid.Row="1" Grid.Column="2" ItemsSource="{Binding}" Name="LoadedLayoutsListBox" Margin="5,0" SelectionMode="Single" MouseDown="ListBoxDeselect" Padding="0,0,10,0">
+                    <ListBox Grid.Row="3" Grid.Column="2" Name="LoadedLayoutsListBox" Margin="5,0" SelectionMode="Single" MouseDown="ListBoxDeselect" Padding="0,0,10,0">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <Grid>
@@ -126,16 +156,16 @@
                                         <ColumnDefinition Width="Auto" />
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
-                                    <RadioButton Margin="3" GroupName="LoadedFilesRBGroup" Loaded="LBRadioButtonOnLoad" />
-                                    <TextBlock Text="{Binding Name}" Grid.Column="1"/>
+                                    <CheckBox Margin="3" IsChecked="True" />
+                                    <TextBlock Text="{Binding RoomName}" Grid.Column="1" />
                                 </Grid>
                             </DataTemplate>
                         </ListBox.ItemTemplate>
                     </ListBox>
 
-                    <TextBlock Grid.Row="2" Grid.Column="0" Text="{Binding ElementName=LoadedFilesListBox, Path=SelectedItem, Converter={StaticResource LoadedFilesInfoConverter}}" Margin="5" MinHeight="40" TextWrapping="WrapWithOverflow" />
-                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding ElementName=LoadedSectionsListBox, Path=SelectedItem, Converter={StaticResource LoadedFilesInfoConverter}}" Margin="5" MinHeight="40" TextWrapping="WrapWithOverflow" />
-                    <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding ElementName=LoadedLayoutsListBox, Path=SelectedItem, Converter={StaticResource LoadedFilesInfoConverter}}" Margin="5" MinHeight="40" TextWrapping="WrapWithOverflow" />
+                    <TextBlock Grid.Row="4" Grid.Column="0" Text="{Binding ElementName=LoadedFilesListBox, Path=SelectedItem, Converter={StaticResource LoadedFilesInfoConverter}}" Margin="5" MinHeight="40" TextWrapping="WrapWithOverflow" />
+                    <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding ElementName=LoadedSectionsListBox, Path=SelectedItem, Converter={StaticResource LoadedSectionsInfoConverter}}" Margin="5" MinHeight="40" TextWrapping="WrapWithOverflow" />
+                    <TextBlock Grid.Row="4" Grid.Column="2" Text="{Binding ElementName=LoadedLayoutsListBox, Path=SelectedItem, Converter={StaticResource LoadedRoomsInfoConverter}}" Margin="5" MinHeight="40" TextWrapping="WrapWithOverflow" />
                 </Grid>
             </TabItem>
         </TabControl>

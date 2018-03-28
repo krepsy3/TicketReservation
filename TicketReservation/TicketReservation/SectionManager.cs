@@ -66,7 +66,10 @@ namespace TicketReservation
 
         public void MultipleChangeReservation(List<Reservation> reservations, ReservationPropertiesContext context)
         {
-
+            foreach (Reservation r in reservations)
+            {
+                ChangeReservation(r, context);
+            }
         }
     }
 }

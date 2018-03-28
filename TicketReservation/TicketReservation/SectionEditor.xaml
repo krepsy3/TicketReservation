@@ -191,7 +191,7 @@
 
                         <Expander Grid.Row="1" Name="FilterPicker" BorderThickness="1" BorderBrush="#858585" Margin="5" Padding="8,3" VerticalAlignment="Top" IsExpanded="False"
                                   Header="Filtrování" MouseDown="RightPanelExpanderMouseHandle" MouseUp="RightPanelExpanderMouseHandle">
-
+                            <TextBlock Text="COMING SOON" Margin="10" />
                         </Expander>
                     </Grid>
                 </ScrollViewer>

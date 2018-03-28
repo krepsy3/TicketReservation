@@ -32,6 +32,12 @@ namespace TicketReservation
         private string _sectionname;
         public string SectionName { get { return _sectionname; } private set { _sectionname = value; UpdateProperty(nameof(SectionName)); } }
 
+        private string _filename;
+        public string FileName { get { return _filename; } set { _filename = value; UpdateProperty(nameof(FileName)); } }
+
+        private bool _bound;
+        public bool Bound { get { return _bound; } set { _bound = value; UpdateProperty(nameof(Bound)); } }
+
         private SelectionState _currentselectionstate;
         public SelectionState CurrentSelectionState { get { return _currentselectionstate; } private set { _currentselectionstate = value; UpdateProperty(nameof(CurrentSelectionState)); } }
         #endregion
@@ -50,6 +56,8 @@ namespace TicketReservation
 
             EditorKindComboBox.ItemsSource = ((ReservationKind[])Enum.GetValues(typeof(ReservationKind))).ToList().GetRange(0, 2);
             MainListView.AddHandler(Thumb.DragDeltaEvent, new DragDeltaEventHandler(CheckColumnWidth), true);
+
+            RoomLayoutGrid.Children.Add(new TextBlock() { Text = "COMING SOON", HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center });
         }
 
         public SectionEditor(SectionManager sm, string sectionName, IDefaultNewResPropSource defSource) : this(sm, sectionName) { DefaultPropsSource = defSource; }
