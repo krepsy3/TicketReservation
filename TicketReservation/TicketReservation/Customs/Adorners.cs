@@ -26,36 +26,48 @@ namespace TicketReservation
             drawingContext.DrawEllipse(Brushes.White, whitelinepen, new Point(ActualWidth - (ActualHeight / 2), ActualHeight - 7), 0.7, 0.7);
         }
 
-        public static void AddToControl(UIElement uielement)
+        public static bool AddToControl(UIElement uielement)
         {
-            bool alreadyin = false;
-            Adorner[] ac = AdornerLayer.GetAdornerLayer(uielement).GetAdorners(uielement);
-
-            if (ac != null)
+            try
             {
-                foreach (Adorner a in ac)
-                {
-                    if (a is MalformedTBAdorner) alreadyin = true;
-                }
-            }
+                bool alreadyin = false;
+                Adorner[] ac = AdornerLayer.GetAdornerLayer(uielement).GetAdorners(uielement);
 
-            if (!alreadyin) AdornerLayer.GetAdornerLayer(uielement).Add(new MalformedTBAdorner(uielement));
+                if (ac != null)
+                {
+                    foreach (Adorner a in ac)
+                    {
+                        if (a is MalformedTBAdorner) alreadyin = true;
+                    }
+                }
+
+                if (!alreadyin) AdornerLayer.GetAdornerLayer(uielement).Add(new MalformedTBAdorner(uielement));
+
+                return true;
+            }
+            catch { return false; }
         }
 
-        public static void RemoveFromControl(UIElement uielement)
+        public static bool RemoveFromControl(UIElement uielement)
         {
-            MalformedTBAdorner self = null;
-            Adorner[] ac = AdornerLayer.GetAdornerLayer(uielement).GetAdorners(uielement);
-
-            if (ac != null)
+            try
             {
-                foreach (Adorner a in ac)
-                {
-                    if (a is MalformedTBAdorner) self = (MalformedTBAdorner)a;
-                }
-            }
+                MalformedTBAdorner self = null;
+                Adorner[] ac = AdornerLayer.GetAdornerLayer(uielement).GetAdorners(uielement);
 
-            if (self != null) AdornerLayer.GetAdornerLayer(uielement).Remove(self);
+                if (ac != null)
+                {
+                    foreach (Adorner a in ac)
+                    {
+                        if (a is MalformedTBAdorner) self = (MalformedTBAdorner)a;
+                    }
+                }
+
+                if (self != null) AdornerLayer.GetAdornerLayer(uielement).Remove(self);
+
+                return true;
+            }
+            catch { return false; }
         }
     }
 
@@ -72,36 +84,48 @@ namespace TicketReservation
             drawingContext.DrawLine(yellowlinepen, new Point(-1, ActualHeight + 1), new Point(ActualWidth + 1, ActualHeight + 1));
         }
 
-        public static void AddToControl(UIElement uielement)
+        public static bool AddToControl(UIElement uielement)
         {
-            bool alreadyin = false;
-            Adorner[] ac = AdornerLayer.GetAdornerLayer(uielement).GetAdorners(uielement);
-
-            if (ac != null)
+            try
             {
-                foreach (Adorner a in ac)
-                {
-                    if (a is PropertyControlChangedAdorner) alreadyin = true;
-                }
-            }
+                bool alreadyin = false;
+                Adorner[] ac = AdornerLayer.GetAdornerLayer(uielement).GetAdorners(uielement);
 
-            if (!alreadyin) AdornerLayer.GetAdornerLayer(uielement).Add(new PropertyControlChangedAdorner(uielement));
+                if (ac != null)
+                {
+                    foreach (Adorner a in ac)
+                    {
+                        if (a is PropertyControlChangedAdorner) alreadyin = true;
+                    }
+                }
+
+                if (!alreadyin) AdornerLayer.GetAdornerLayer(uielement).Add(new PropertyControlChangedAdorner(uielement));
+
+                return true;
+            }
+            catch { return false; }
         }
 
-        public static void RemoveFromControl(UIElement uielement)
+        public static bool RemoveFromControl(UIElement uielement)
         {
-            PropertyControlChangedAdorner self = null;
-            Adorner[] ac = AdornerLayer.GetAdornerLayer(uielement).GetAdorners(uielement);
-
-            if (ac != null)
+            try
             {
-                foreach (Adorner a in ac)
-                {
-                    if (a is PropertyControlChangedAdorner) self = (PropertyControlChangedAdorner)a;
-                }
-            }
+                PropertyControlChangedAdorner self = null;
+                Adorner[] ac = AdornerLayer.GetAdornerLayer(uielement).GetAdorners(uielement);
 
-            if (self != null) AdornerLayer.GetAdornerLayer(uielement).Remove(self);
+                if (ac != null)
+                {
+                    foreach (Adorner a in ac)
+                    {
+                        if (a is PropertyControlChangedAdorner) self = (PropertyControlChangedAdorner)a;
+                    }
+                }
+
+                if (self != null) AdornerLayer.GetAdornerLayer(uielement).Remove(self);
+
+                return true;
+            }
+            catch { return false; }
         }
     }
 }

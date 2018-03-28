@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -175,6 +176,30 @@ namespace TicketReservation
             {
                 return (Visibility)value == Visibility.Hidden || (Visibility)value == Visibility.Collapsed ? 0 : 1;
             }
+        }
+    }
+
+    public class ReservationFileInfoToStringInformationConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            string result = "Informace o vybraném souboru:";
+            if (value == null || !(value is ReservationFileInfo)) return result ;
+            else
+            {
+                ReservationFileInfo src = (ReservationFileInfo)value;
+
+                result += "\n" + "Soubor: " + src.FullName;
+                result += "\n" + "Obsahuje sekcí: " + src.Sections.Count;
+                result += "\n" + "Obsahuje sálů: " + src.Layouts.Count;
+
+                return result;
+            }    
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            return Binding.DoNothing;
         }
     }
 }

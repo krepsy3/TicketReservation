@@ -54,10 +54,9 @@ namespace TicketReservation
 
         public SectionEditor(SectionManager sm, string sectionName, IDefaultNewResPropSource defSource) : this(sm, sectionName) { DefaultPropsSource = defSource; }
 
-        public List<Reservation> GetReservations()
-        {
-            return new List<Reservation>(sectionManager.Reservations);
-        }
+        private void EditorLoaded(object sender, RoutedEventArgs e) { ResetAdding(); }
+
+        public List<Reservation> GetReservations() { return new List<Reservation> (sectionManager.Reservations); }
 
         #region Form Manipulation
         private void ControlMouseDown(object sender, MouseButtonEventArgs e)
@@ -165,16 +164,34 @@ namespace TicketReservation
             {
                 case SelectionState.Adding:
                     {
+                        bool bookedonmalformed = false;
+                        bool getbookedonfromsrc = false;
+                        if (EditorBookedOnTextBox.Text.GetDateTime() == null) bookedonmalformed = true;
+                        if (bookedonmalformed && DefaultPropsSource.GetDefaultBookedOn() != null) getbookedonfromsrc = true;
+                        bool seatnomalformed = false;
+                        try { int.Parse(EditorSeatNoTextBox.Text.Replace(" ", "")); } catch { seatnomalformed = true; }
+
+                        sectionManager.AddReservation(new Reservation(bookedonmalformed ? (getbookedonfromsrc ? (DateTime)DefaultPropsSource.GetDefaultBookedOn() : new DateTime()) : newbookedon,
+                                                                      newuser, newkind, newname, newcontact, newsold, seatnomalformed ? -1 : newseatno, newticketcode));
                         break;
                     }
 
                 case SelectionState.EditingSingle:
                     {
+                        MainListView.SelectionChanged -= ReservationSelected;
+                        int currentindex = MainListView.SelectedIndex;
+                        SaveReservationAt(currentindex);
+                        MainListView.SelectedIndex = currentindex;
+                        UpdateAllPropsFields(true);
+                        MainListView.SelectionChanged += ReservationSelected;
                         break;
                     }
 
                 case SelectionState.EditingMultiple:
                     {
+                        MainListView.SelectionChanged -= ReservationSelected;
+                        SaveReservations((List<Reservation>)((MainListView.SelectedItems as List<object>).Cast<Reservation>()));
+                        MainListView.SelectionChanged += ReservationSelected;
                         break;
                     }
             }
@@ -182,11 +199,54 @@ namespace TicketReservation
 
         private void CancelReservation(object sender, RoutedEventArgs e)
         {
-            ResetAdding();
+            switch (CurrentSelectionState)
+            {
+                case SelectionState.Adding:
+                    {
+                        ResetAdding();
+                        break;
+                    }
+
+                case SelectionState.EditingSingle:
+                    {
+                        Reservation propertysource = (Reservation)MainListView.SelectedItem;
+
+                        EditorBookedOnTextBox.Text = propertysource.BookedOn.Ticks > 0 ? propertysource.BookedOn.Day + "." + propertysource.BookedOn.Month + "." + propertysource.BookedOn.Year : "";
+                        EditorContactTextBox.Text = propertysource.Contact;
+                        EditorKindComboBox.SelectedIndex = (int)(propertysource.Kind);
+                        EditorNameTextBox.Text = propertysource.Name;
+                        EditorSeatNoTextBox.Text = propertysource.SeatNo.ToString();
+                        EditorSoldCheckBox.IsChecked = propertysource.Sold;
+                        EditorTicketCodeTextBox.Text = propertysource.TicketCode;
+                        EditorUserTextBox.Text = propertysource.User;
+
+                        UpdateAllPropsFields(true);
+                        break;
+                    }
+
+                case SelectionState.EditingMultiple:
+                    {
+                        newcontact = EditorContactTextBox.Text = "";
+                        newkind = ((ReservationKind)(EditorKindComboBox.SelectedIndex = -1));
+                        newname = EditorNameTextBox.Text = "";
+                        newsold = ((bool)(EditorSoldCheckBox.IsChecked = false));
+                        newticketcode = EditorTicketCodeTextBox.Text = "";
+                        newuser = EditorUserTextBox.Text = "";
+
+                        EditorBookedOnTextBox.Text = "";
+                        newbookedon = new DateTime();
+                        EditorSeatNoTextBox.Text = "";
+                        newseatno = -1;
+
+                        UpdateAllPropsFields(true);
+                        break;
+                    }
+            }
         }
         #endregion
 
-            #region Reservation Properties TextBoxes handle
+        #region Reservation Properties TextBoxes handle
+        #region fields
         private DateTime bookedon = new DateTime();
         private string user;
         private ReservationKind kind = ReservationKind.None;
@@ -213,6 +273,7 @@ namespace TicketReservation
         private bool newsold;
         private int newseatno = -1;
         private string newticketcode;
+        #endregion
 
         private void ReservationTextPropertyUpdated(object sender, TextChangedEventArgs e) { if (sender is Control) UpdateReservationPropsFields((Control)sender, false); }
         private void ReservationSoldUpdated(object sender, RoutedEventArgs e) { if (sender is Control) UpdateReservationPropsFields((Control)sender, false); }

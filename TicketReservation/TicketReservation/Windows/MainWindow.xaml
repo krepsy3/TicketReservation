@@ -1,0 +1,143 @@
+﻿<Window x:Class="TicketReservation.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:TicketReservation"
+        mc:Ignorable="d"
+        Title="Evidence rezervací vstupenek" Height="550" Width="700" MinHeight="550" MinWidth="700" ContentRendered="WinRendered">
+    <Window.Resources>
+        <local:TicketKindEnumToStringConverter x:Key="KindStringConverter" />
+        <local:TextBoxLengthToHelpTextBlockVisibilityConverter x:Key="HelperVisibilityConverter" />
+        <local:ReservationFileInfoToStringInformationConverter x:Key="LoadedFilesInfoConverter" />
+    </Window.Resources>
+    
+    <DockPanel>
+        <Menu DockPanel.Dock="Top" Padding="5,0">
+            <MenuItem Header="Soubor"></MenuItem>
+            <MenuItem Header="Info"></MenuItem>
+        </Menu>
+
+        <Expander DockPanel.Dock="Top" Margin="5" Padding="8,2" Header="Výchozí hodnoty pro nové rezervace" VerticalAlignment="Top" BorderThickness="1" BorderBrush="#FF858585" MouseDown="DefExpanderMouseDown">
+            <WrapPanel>
+                <WrapPanel.Resources>
+                    <Style TargetType="Control" x:Key="MarginStyle">
+                        <Setter Property="Margin" Value="10,5,25,5" />
+                        <Setter Property="VerticalAlignment" Value="Center" />
+                        <Setter Property="Padding" Value="2" />
+                    </Style>
+
+                    <Style BasedOn="{StaticResource MarginStyle}" TargetType="TextBox" />
+                    <Style BasedOn="{StaticResource MarginStyle}" TargetType="CheckBox" />
+                    <Style BasedOn="{StaticResource MarginStyle}" TargetType="ComboBox" />
+
+                    <Style TargetType="TextBlock">
+                        <Setter Property="VerticalAlignment" Value="Center" />
+                    </Style>
+                </WrapPanel.Resources>
+                
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Vložil:" />
+                    <Grid>
+                        <TextBox Width="150" Name="DefaultUserTextBox" />
+                        <TextBlock Padding="15,0" Text="Výchozí operátor aplikace" Foreground="#FF949494" FontStyle="Italic" IsHitTestVisible="False"
+                                   HorizontalAlignment="Left" Visibility="{Binding Path=Text.Length, ElementName=DefaultUserTextBox, Converter={StaticResource HelperVisibilityConverter}}" />
+                    </Grid>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Zapsáno dne:" />
+                    <TextBox Width="150" Name="DefaultBookedOnTextBox" />
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Zaplaceno:" />
+                    <CheckBox Name="DefaultSoldCheckBox" />
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Druh:" />
+                    <ComboBox Width="150" Name="DefaultKindComboBox">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Converter={StaticResource KindStringConverter}}" />
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                </StackPanel>
+            </WrapPanel>
+        </Expander>
+
+        <TextBlock DockPanel.Dock="Bottom" Margin="5" Text="©Štof, 2017 - 2018" />
+
+        <TabControl Margin="5,0" Name="MainTabControl">
+            <TabItem Name="ManagerTabItem" Header="Souborový manažer">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Text="Načtené soubory:" TextDecorations="Underline" Grid.Column="0" HorizontalAlignment="Center" Margin="5" />
+                    <TextBlock Text="Načtené sekce:" TextDecorations="Underline" Grid.Column="1" HorizontalAlignment="Center" Margin="5" />
+                    <TextBlock Text="Načtené sály:" TextDecorations="Underline" Grid.Column="2" HorizontalAlignment="Center" Margin="5" />
+
+                    <ListBox Grid.Row="1" Grid.Column="0" ItemsSource="{Binding LoadedFiles}" Name="LoadedFilesListBox" Margin="5,0" SelectionMode="Single" MouseDown="ListBoxDeselect" Padding="0,0,10,0">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Button HorizontalAlignment="Center" VerticalAlignment="Center" Content="X" FontFamily="Lucida" FontSize="10" FontWeight="ExtraBold" Width="{Binding RelativeSource={RelativeSource Self}, Path=ActualHeight}" Click="UnloadFile" />
+                                    <RadioButton Margin="3" GroupName="LoadedFilesRBGroup" Loaded="LBRadioButtonOnLoad" Grid.Column="1" />
+                                    <TextBlock Text="{Binding Name}" Grid.Column="2" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                    <ListBox Grid.Row="1" Grid.Column="1" ItemsSource="{Binding}" Name="LoadedSectionsListBox" Margin="5,0" SelectionMode="Single" MouseDown="ListBoxDeselect" Padding="0,0,10,0">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <CheckBox Margin="3" IsChecked="True" />
+                                    <TextBlock Text="{Binding SectionName}" Grid.Column="1" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                    <ListBox Grid.Row="1" Grid.Column="2" ItemsSource="{Binding}" Name="LoadedLayoutsListBox" Margin="5,0" SelectionMode="Single" MouseDown="ListBoxDeselect" Padding="0,0,10,0">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <RadioButton Margin="3" GroupName="LoadedFilesRBGroup" Loaded="LBRadioButtonOnLoad" />
+                                    <TextBlock Text="{Binding Name}" Grid.Column="1"/>
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <TextBlock Grid.Row="2" Grid.Column="0" Text="{Binding ElementName=LoadedFilesListBox, Path=SelectedItem, Converter={StaticResource LoadedFilesInfoConverter}}" Margin="5" MinHeight="40" TextWrapping="WrapWithOverflow" />
+                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding ElementName=LoadedSectionsListBox, Path=SelectedItem, Converter={StaticResource LoadedFilesInfoConverter}}" Margin="5" MinHeight="40" TextWrapping="WrapWithOverflow" />
+                    <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding ElementName=LoadedLayoutsListBox, Path=SelectedItem, Converter={StaticResource LoadedFilesInfoConverter}}" Margin="5" MinHeight="40" TextWrapping="WrapWithOverflow" />
+                </Grid>
+            </TabItem>
+        </TabControl>
+    </DockPanel>
+</Window>

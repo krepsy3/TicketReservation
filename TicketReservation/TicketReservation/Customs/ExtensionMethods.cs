@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Media;
 
 namespace TicketReservation
 {
@@ -76,6 +78,16 @@ namespace TicketReservation
         {
             try { return int.Parse(input.Replace(" ","")); }
             catch { return null; }
+        }
+
+        public static IEnumerable<T> FindVisualChildren<T>(this DependencyObject parent) where T : DependencyObject
+        {
+            for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
+            {
+                DependencyObject child = VisualTreeHelper.GetChild(parent, i);
+                if (child is T) yield return (child as T);
+                foreach (T childofchild in child.FindVisualChildren<T>()) if (childofchild is T) yield return (childofchild as T);
+            }
         }
     }
 }
